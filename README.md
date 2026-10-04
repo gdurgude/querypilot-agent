@@ -1,70 +1,76 @@
-# YapBuddy Chatbot
+# QueryPilot Agent
 
-YapBuddy is a simple AI-powered command-line chatbot built with Python, LangChain, and Google Gemini.
+QueryPilot is a small AI agent I built to learn how tool-using LLM applications work in practice.
 
-The goal of this project was to understand how LLM-powered applications work in practice, including API integration, environment variables, model responses, error handling, and working with external AI services.
+The agent runs in a Streamlit chat interface, uses Groq for the language model, and can call a web search tool when it needs current information. I also added conversation memory so it can continue from earlier messages instead of treating every prompt like a brand-new conversation.
 
-## Features
+One fun detail: when the agent responds, a cat animation appears next to the answer.
 
-- Interactive command-line chatbot
-- Powered by Google Gemini
-- LangChain integration
-- Secure API key handling using `.env`
-- Continuous question-and-answer interaction
-- Clean extraction of AI responses
-- Simple architecture that can be extended into a larger GenAI application
+## What it does
+
+- Chat with the agent in the browser
+- Search the web when current information is needed
+- Remember previous messages in the same session
+- Continue the conversation naturally
+- Display responses in a Streamlit chat interface
+- Show a cat animation with AI responses
+- Use LangChain and LangGraph for agent behavior and memory
 
 ## Tech Stack
 
 - Python
+- Streamlit
 - LangChain
-- Google Gemini API
-- `langchain-google-genai`
+- LangGraph
+- Groq
+- Keenable Search
 - `python-dotenv`
 
 ## Project Structure
 
 ```text
 GenAI-Series/
-│
 ├── apps/
-│   └── 1_qna_bot.py
-│
-├── notebooks/
-│
+│   └── 2_qna_bot.py
+├── assets/
+│   └── cat_talking.mp4
 ├── .env
 ├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
 
-> The `.env` file is excluded from GitHub because it contains the API key.
+The `.env` file is not pushed to GitHub because it contains API keys.
 
-## How It Works
+## How the agent works
 
 ```text
-User enters a question
-        ↓
-Python application
-        ↓
-LangChain
-        ↓
-Google Gemini API
-        ↓
-AI-generated response
-        ↓
-Response displayed in terminal
+User question
+     ↓
+Streamlit chat interface
+     ↓
+LangChain agent
+     ↓
+Groq LLM
+     ↓
+Web search tool when needed
+     ↓
+LangGraph memory
+     ↓
+Final response
+     ↓
+Cat animation + answer
 ```
 
-The chatbot sends the user's input to Gemini through LangChain and displays only the generated text response.
+The agent does not use the search tool for every question. It can answer directly when the model already has enough context, and use search when the question needs current or external information.
 
 ## Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/gdurgude/yapbuddy-chatbot.git
-cd yapbuddy-chatbot
+git clone https://github.com/gdurgude/querypilot-agent.git
+cd querypilot-agent
 ```
 
 ### 2. Create a virtual environment
@@ -73,7 +79,7 @@ cd yapbuddy-chatbot
 python -m venv .venv
 ```
 
-Activate it on Windows PowerShell:
+Activate it:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -85,111 +91,68 @@ Activate it on Windows PowerShell:
 python -m pip install -r requirements.txt
 ```
 
-### 4. Add your Gemini API key
+### 4. Add environment variables
 
-Create a `.env` file in the project root.
+Create a `.env` file in the project root and add the API keys required by Groq and the search tool.
+
+Example:
 
 ```env
-GEMINI_API_KEY=your_api_key_here
+GROQ_API_KEY=your_key_here
 ```
 
-Do not commit this file to GitHub.
+Add any additional API key required by your search provider as well.
 
-### 5. Run YapBuddy
+### 5. Run the app
 
 ```powershell
-python apps/1_qna_bot.py
+streamlit run apps/2_qna_bot.py
 ```
 
-## Example
+Streamlit should automatically open the app in your browser.
+
+## What I learned
+
+This project taught me a lot more than just how to call an LLM API.
+
+I learned how an agent can decide when to use a tool, how conversation memory works with a thread ID and checkpointing, and how Streamlit reruns affect application state.
+
+I also ran into real API issues while building it, including rate limits, token limits, temporary service failures, missing packages, and model availability changes. Debugging those problems gave me a much better understanding of what it takes to make an AI application reliable.
+
+## Memory
+
+The agent uses LangGraph's `MemorySaver` so it can remember previous turns during the running session.
+
+For example:
 
 ```text
-User: Hi
+User: My favorite language is Python.
 
-AI: Hello! How can I help you today?
+AI: Got it.
 
-User: What is AI engineering?
+User: What language did I say I like?
 
-AI: AI engineering focuses on designing, building, evaluating,
-and deploying software systems powered by artificial intelligence.
+AI: You said your favorite language is Python.
 ```
 
-## What I Learned
+The current memory is in-memory only, so restarting the application clears it.
 
-While building YapBuddy, I learned how to:
+A future improvement would be to use persistent storage such as SQLite or PostgreSQL.
 
-- Connect a Python application to an LLM
-- Use LangChain to interact with Gemini
-- Work with API keys and environment variables
-- Create and use Python virtual environments
-- Install and manage Python dependencies
-- Understand structured model responses
-- Extract only the generated text from model output
-- Troubleshoot missing Python packages
-- Debug API model availability issues
-- Handle Gemini `429` quota errors
-- Understand temporary `503` model availability errors
-- Work with Git and GitHub repositories
+## Current Limitations
 
-## Errors I Encountered
+This is still an early version.
 
-A few real issues came up while building the project.
+A few things I would improve next:
 
-### Model Not Found
-
-An older Gemini model returned a `404 NOT_FOUND` error because it was no longer available for new users.
-
-This taught me that AI model availability and API versions can change over time.
-
-### Service Unavailable
-
-Gemini occasionally returned:
-
-```text
-503 UNAVAILABLE
-```
-
-This happens when the model is temporarily under heavy demand.
-
-In a production application, this should be handled using retry logic and fallback behavior.
-
-### Rate Limit
-
-The API also returned:
-
-```text
-429 RESOURCE_EXHAUSTED
-```
-
-after reaching the free-tier request quota.
-
-This highlighted the importance of monitoring API limits, costs, and usage when building AI applications.
-
-## Future Improvements
-
-YapBuddy is currently a lightweight chatbot, but I plan to extend it with:
-
-- Conversation memory
+- Persistent memory across app restarts
+- Better handling for API rate limits
+- Retry logic for temporary failures
 - Streaming responses
-- Retry and rate-limit handling
-- Prompt templates
-- FastAPI backend
-- Streamlit interface
-- Chat history
-- RAG with document retrieval
-- Vector embeddings
-- Vector database integration
-- Source citations
-- LLM evaluation
-- Multiple model support
-
-## Why I Built This
-
-I built YapBuddy as part of my practical learning in AI engineering.
-
-Instead of only studying LLM concepts theoretically, I wanted to build working AI applications and understand how each component behaves in real systems.
-
-This project is the starting point for a larger GenAI learning series covering RAG, embeddings, vector databases, evaluation, agents, and production AI systems.
+- Cleaner source citations from search
+- Multiple conversations or user sessions
+- Better UI styling
+- Deployment to a public URL
 
 ## Author
 
